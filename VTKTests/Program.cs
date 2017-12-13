@@ -30,11 +30,12 @@ namespace VTKTests
             string fileName = "c:\\Users\\Tobiv\\Neu\\pv_insitu_300x300x300_00000.vtk";
             string fileContent = IO.standardIO.ReadFile_TextContent(fileName);
             //Set the reader
-            var currentReader = Kitware.VTK.vtkXMLFileReadTester.New();
-            //var reader = Kitware.VTK.vtkXMLParser.New();
+            var currentReader = Kitware.VTK.vtkXMLImageDataReader.New();
+            //var currentReader = Kitware.VTK.vtkXMLFileReadTester.New();
+            //var currentReader = Kitware.VTK.vtkXMLParser.New();
 
             //currentReader.SetFileName(fileName);
-            
+
             //reader.Update();
 
             //Do some Test Stuff with this reader
