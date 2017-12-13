@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Kitware.VTK;
 
@@ -10,37 +11,39 @@ namespace VTKTests
 
         static void Main(string[] args)
         {
-            Example_3DSphere();
-            Example_ReadMeteorFile();
+            switch (args.Count() > 0 ? args[0] : "")
+            {
+                case "sphere":
+                    Example_3DSphere();
+                    break;
+                case "readtest":
+                    Example_ReadMeteorFile();
+                    break;
+                default:
+                    break;
+            }
 
         }
-        #region Example_3DSphere
+        #region Example_ReadMeteorFile
         private static void Example_ReadMeteorFile()
         {
-            var reader = Kitware.VTK.vtkXMLFileReadTester.New();
+            string fileName = "c:\\Users\\Tobiv\\Neu\\pv_insitu_300x300x300_00000.vtk";
+            string fileContent = IO.standardIO.ReadFile_TextContent(fileName);
+            //Set the reader
+            var currentReader = Kitware.VTK.vtkXMLFileReadTester.New();
             //var reader = Kitware.VTK.vtkXMLParser.New();
-            //reader.set
-            reader.SetFileName("c:\\Users\\Tobiv\\Neu\\scivis\\oceans11.lanl.gov\\deepwaterimpact\\yA31\\300x300x300-AllScalars_resolution\\pv_insitu_300x300x300_00000.vtk");
-            FileStream file = File.OpenRead("c:\\Users\\Tobiv\\Neu\\pv_insitu_300x300x300_00000.vtk");
-            StreamReader filereader = new StreamReader(file);
-            StringBuilder builder = new StringBuilder();
-            while (true)
-            {
-                string line = filereader.ReadLine();
-                if (line == null)
-                {
-                    break;
-                }
-                builder.Append(line);
-            }
-            string filecontent = builder.ToString();
+
+            //currentReader.SetFileName(fileName);
+            
             //reader.Update();
-            var read = reader.Parse(filecontent);
-            var z = reader.IsA("ImageData");
-            Console.WriteLine("statistics!");
-            string fileversion = reader.GetFileVersion();
-            var name = reader.GetFileName();
-            var parseres = reader.Parse();
+
+            //Do some Test Stuff with this reader
+            Console.WriteLine("Statistics!");
+            Console.WriteLine("IsA(\"ImageData\"): " + currentReader.IsA("ImageData"));
+            Console.WriteLine("FileVersion: " + currentReader.GetFileVersion());
+            Console.WriteLine("GetName: " + currentReader.GetFileName());
+            Console.WriteLine("Parse(): " + currentReader.Parse());
+            Console.WriteLine("Parse(filecontent): " + currentReader.Parse(fileContent));
         }
         #endregion
         #region Example_3DSphere
