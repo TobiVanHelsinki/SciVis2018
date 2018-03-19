@@ -17,17 +17,28 @@ namespace VTKTests
                     Example_3DSphere();
                     break;
                 case "readtest":
-                    Example_ReadMeteorFile();
+                    try
+                    {
+                        Example_ReadMeteorFile();
+                    }
+                    catch (Exception ex)
+                    {
+                    }
                     break;
                 default:
                     break;
             }
-
+            //Example_3DSphere();
+            Console.ReadKey();
         }
         #region Example_ReadMeteorFile
         private static void Example_ReadMeteorFile()
         {
-            string fileName = "c:\\Users\\Tobiv\\Neu\\pv_insitu_300x300x300_00000.vtk";
+            //string fileName = "c:\\Users\\Tobiv\\Neu\\pv_insitu_300x300x300_00000.vtk";
+            string fileName = @"c:\Users\Tobiv\Neu\scivis\oceans11.lanl.gov\deepwaterimpact\yA31\300x300x300-AllScalars_resolution\pv_insitu_300x300x300_19021.vti";
+            //string fileName = "c:/Users/Tobiv/Neu/pv_insitu_300x300x300_00000.vti";
+            //ReadImageData(fileName);
+            Display_Image_Data(fileName);
             string fileContent = IO.standardIO.ReadFile_TextContent(fileName);
             //Set the reader
             var currentReader = Kitware.VTK.vtkXMLImageDataReader.New();
@@ -41,11 +52,107 @@ namespace VTKTests
             //Do some Test Stuff with this reader
             Console.WriteLine("Statistics!");
             Console.WriteLine("IsA(\"ImageData\"): " + currentReader.IsA("ImageData"));
-            Console.WriteLine("FileVersion: " + currentReader.GetFileVersion());
+            //Console.WriteLine("FileVersion: " + currentReader.GetFileVersion());
             Console.WriteLine("GetName: " + currentReader.GetFileName());
-            Console.WriteLine("Parse(): " + currentReader.Parse());
-            Console.WriteLine("Parse(filecontent): " + currentReader.Parse(fileContent));
+            //Console.WriteLine("Parse(): " + currentReader.Parse());
+            //Console.WriteLine("Parse(filecontent): " + currentReader.Parse(fileContent));
         }
+
+        private static void ReadImageData(string filePath)
+        {
+            // Path to vtk data must be set as an environment variable
+            // VTK_DATA_ROOT = "C:\VTK\vtkdata-5.8.0"
+            //vtkTesting test = vtkTesting.New();
+            //string root = test.GetDataRoot();
+            //filePath = System.IO.Path.Combine(root, @"Data\vase_1comp.vti");
+
+
+
+            // reader
+            // Read all the data from the file
+            vtkXMLImageDataReader reader = vtkXMLImageDataReader.New();
+            if (reader.CanReadFile(filePath) == 0)
+            {
+                //MessageBox.Show("Cannot read file \"" + filePath + "\"", "Error", MessageBoxButtons.OK);
+                //return;
+            }
+            reader.SetFileName(filePath);
+            reader.Update(); // here we read the file actually
+
+            // mapper
+            vtkDataSetMapper mapper = vtkDataSetMapper.New();
+            mapper.SetInputConnection(reader.GetOutputPort());
+
+            // actor
+            vtkActor actor = vtkActor.New();
+            actor.SetMapper(mapper);
+            actor.GetProperty().SetRepresentationToWireframe();
+
+            // get a reference to the renderwindow of our renderWindowControl1
+            vtkRenderWindow renderWindow = vtkRenderWindow.New();
+            // renderer
+            var renderers = renderWindow.GetRenderers();
+            vtkRenderer renderer = renderers.GetFirstRenderer();
+            if (renderer == null)
+            {
+                vtkRenderer n = new vtkOpenGLRenderer();
+                renderWindow.AddRenderer(n);
+                renderer = renderers.GetFirstRenderer();
+            }
+            // set background color
+            renderer.SetBackground(0.2, 0.3, 0.4);
+            // add our actor to the renderer
+            renderer.AddActor(actor);
+
+        }
+
+        private static void Display_Image_Data(string filePath)
+        {
+            vtkXMLImageDataReader reader = vtkXMLImageDataReader.New();
+            if (reader.CanReadFile(filePath) == 0)
+            {
+                //MessageBox.Show("Cannot read file \"" + filePath + "\"", "Error", MessageBoxButtons.OK);
+                //return;
+            }
+            reader.SetFileName(filePath);
+            reader.Update(); // here we read the file actually
+
+            // mapper
+
+            var shrink = vtkShrinkPolyData.New();
+            vtkDataSetMapper mapper = vtkDataSetMapper.New();
+
+            shrink.SetInputConnection(reader.GetOutputPort());
+            mapper.SetInputConnection(reader.GetOutputPort());
+            shrink.SetShrinkFactor(0.9);
+
+            // The actor links the data pipeline to the rendering subsystem         
+            var actor = vtkActor.New();
+            actor.SetMapper(mapper);
+            actor.GetProperty().SetColor(1, 0, 0);
+
+            // Create components of the rendering subsystem         //         
+            var ren1 = vtkRenderer.New();
+            var renWin = vtkRenderWindow.New();
+            renWin.AddRenderer(ren1);
+            var iren = vtkRenderWindowInteractor.New();
+            iren.SetRenderWindow(renWin);
+
+            // Add the actors to the renderer, set the window size         //         
+            ren1.AddViewProp(actor);
+            renWin.SetSize(250, 250);
+            renWin.Render();
+            var camera = ren1.GetActiveCamera();
+            camera.Zoom(1.5);
+
+            // render the image and start the event loop         //         
+            renWin.Render();
+            iren.Initialize();
+            iren.Start();
+
+            deleteAllVTKObjects();
+        }
+
         #endregion
         #region Example_3DSphere
         static vtkSphereSource sphere;
