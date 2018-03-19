@@ -3,80 +3,61 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Kitware.VTK;
-
-namespace VTKTests
+using static SciVis.Helper;
+namespace SciVis
 {
-    class Program
+    public static class Helper
     {
+        public static void Display(string format, params object[] args)
+        {
+            Console.WriteLine(String.Format(format, args));
+        }
+    }
+    public class Program
+    {
+        public static string File = @"c:\Users\Tobiv\Neu\scivis\oceans11.lanl.gov\deepwaterimpact\yA31\300x300x300-AllScalars_resolution\pv_insitu_300x300x300_19021.vti";
 
         static void Main(string[] args)
         {
-            switch (args.Count() > 0 ? args[0] : "")
-            {
-                case "sphere":
-                    Example_3DSphere();
-                    break;
-                case "readtest":
-                    try
-                    {
-                        Example_ReadMeteorFile();
-                    }
-                    catch (Exception ex)
-                    {
-                    }
-                    break;
-                default:
-                    break;
-            }
-            //Example_3DSphere();
+            Test_vti_Data();
+            //ReadImageData(fileName);
+            //Display_Image_Data(fileName);
             Console.ReadKey();
         }
-        #region Example_ReadMeteorFile
-        private static void Example_ReadMeteorFile()
+        #region Meteor File Stuff
+        private static void Test_vti_Data()
         {
-            //string fileName = "c:\\Users\\Tobiv\\Neu\\pv_insitu_300x300x300_00000.vtk";
-            string fileName = @"c:\Users\Tobiv\Neu\scivis\oceans11.lanl.gov\deepwaterimpact\yA31\300x300x300-AllScalars_resolution\pv_insitu_300x300x300_19021.vti";
-            //string fileName = "c:/Users/Tobiv/Neu/pv_insitu_300x300x300_00000.vti";
-            //ReadImageData(fileName);
-            Display_Image_Data(fileName);
-            string fileContent = IO.standardIO.ReadFile_TextContent(fileName);
-            //Set the reader
-            var currentReader = Kitware.VTK.vtkXMLImageDataReader.New();
-            //var currentReader = Kitware.VTK.vtkXMLFileReadTester.New();
-            //var currentReader = Kitware.VTK.vtkXMLParser.New();
+            vtkXMLFileReadTester Tester = new vtkXMLFileReadTester();
+            Tester.SetFileName(File);
+            Display("Normal can read: {0}, type: {1}, date: {2}", Tester.TestReadFile(), Tester.GetFileVersion(), Tester.GetFileDataType());
 
-            //currentReader.SetFileName(fileName);
-
-            //reader.Update();
-
-            //Do some Test Stuff with this reader
-            Console.WriteLine("Statistics!");
-            Console.WriteLine("IsA(\"ImageData\"): " + currentReader.IsA("ImageData"));
-            //Console.WriteLine("FileVersion: " + currentReader.GetFileVersion());
-            Console.WriteLine("GetName: " + currentReader.GetFileName());
-            //Console.WriteLine("Parse(): " + currentReader.Parse());
-            //Console.WriteLine("Parse(filecontent): " + currentReader.Parse(fileContent));
+            vtkXMLFileReadTester Tester2 = vtkXMLFileReadTester.New();
+            Tester2.SetFileName(File);
+            Display("staticnew can read: {0}, type: {1}, date: {2}", Tester2.TestReadFile(), Tester2.GetFileVersion(), Tester2.GetFileDataType());
+            
+            var currentReader = vtkXMLImageDataReader.New();
+            currentReader.SetFileName(File);
+            var a = currentReader.CanReadFile(File);
+            Display("reader NumberOfPoints: {0}, release date: {1}, Step: {2}, StepRange: {3}", currentReader.GetNumberOfPoints(), currentReader.GetReleaseDataFlag(), currentReader.GetTimeStep(), currentReader.GetTimeStepRange());
+            for (int i = 0; i < currentReader.GetNumberOfPointArrays(); i++)
+            {
+                Display("PointArray{0} Name:{1}",i, currentReader.GetPointArrayName(i));
+            }
+            var selec = currentReader.GetPointDataArraySelection();
+            //Display("PointArray{0} Name:{1}",selec.);
         }
 
-        private static void ReadImageData(string filePath)
+        public static void ReadImageData()
         {
-            // Path to vtk data must be set as an environment variable
-            // VTK_DATA_ROOT = "C:\VTK\vtkdata-5.8.0"
-            //vtkTesting test = vtkTesting.New();
-            //string root = test.GetDataRoot();
-            //filePath = System.IO.Path.Combine(root, @"Data\vase_1comp.vti");
-
-
-
             // reader
             // Read all the data from the file
             vtkXMLImageDataReader reader = vtkXMLImageDataReader.New();
-            if (reader.CanReadFile(filePath) == 0)
+            if (reader.CanReadFile(File) == 0)
             {
-                //MessageBox.Show("Cannot read file \"" + filePath + "\"", "Error", MessageBoxButtons.OK);
+                Display("Cannot read file \"" + File + "\"", "Error");
                 //return;
             }
-            reader.SetFileName(filePath);
+            reader.SetFileName(File);
             reader.Update(); // here we read the file actually
 
             // mapper
@@ -106,15 +87,15 @@ namespace VTKTests
 
         }
 
-        private static void Display_Image_Data(string filePath)
+        public static void Display_Image_Data()
         {
             vtkXMLImageDataReader reader = vtkXMLImageDataReader.New();
-            if (reader.CanReadFile(filePath) == 0)
+            if (reader.CanReadFile(File) == 0)
             {
                 //MessageBox.Show("Cannot read file \"" + filePath + "\"", "Error", MessageBoxButtons.OK);
                 //return;
             }
-            reader.SetFileName(filePath);
+            reader.SetFileName(File);
             reader.Update(); // here we read the file actually
 
             // mapper
@@ -154,6 +135,7 @@ namespace VTKTests
         }
 
         #endregion
+
         #region Example_3DSphere
         static vtkSphereSource sphere;
         static vtkShrinkPolyData shrink;
