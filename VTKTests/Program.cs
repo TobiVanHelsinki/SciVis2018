@@ -12,40 +12,30 @@ namespace SciVis
 
         static void Main(string[] args)
         {
-            while (true)
+            vtkImageData Data = null;
+            try
             {
-                try
-                {
-                    vtkImageData Data = null;
-                    try
-                    {
-                        Data = ReadInData(File);
-                    }
-                    catch (Exception ex)
-                    {
-                        Display("Error Reading: ", ex);
-                    }
-                    try
-                    {
-                        Analyse(Data);
-                    }
-                    catch (Exception ex)
-                    {
-                        Display("Error Analysing: ", ex);
-                    }
-                    
-                    //Test_vti_Data();
-                    //ReadImageData(File);
-                    //Display_Image_Data(File);
-                }
-                catch (Exception ex)
-                {
-                    Display("Programm Error: ", ex);
-                    System.Diagnostics.Debugger.Break();
-                }
-            Console.ReadKey();
+                Data = ReadInData(File);
             }
-            Console.ReadKey();
+            catch (Exception ex)
+            {
+                Display("Error Reading: ", ex);
+                System.Diagnostics.Debugger.Break();
+            }
+            try
+            {
+                Analyse(Data);
+            }
+            catch (Exception ex)
+            {
+                Display("Error Analysing: ", ex);
+                System.Diagnostics.Debugger.Break();
+            }
+            //Test_vti_Data();
+            //ReadImageData(File);
+            //Display_Image_Data(File);
+            //System.Diagnostics.Debugger.Break();
+            //Console.ReadKey();
         }
         public static vtkImageData ReadInData(string FileName)
         {
@@ -57,7 +47,9 @@ namespace SciVis
                 throw new Exception("Cannot Read File");
             }
             Reader.Update();
-            return Reader.GetOutput();
+            var ret = Reader.GetOutput();
+            Reader.Dispose();
+            return ret;
         }
         public static void Analyse(vtkImageData FileContent)
         {
