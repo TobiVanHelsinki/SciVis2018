@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using Kitware.VTK;
+﻿using Kitware.VTK;
+using System;
 using static SciVis.Helper;
-using static SciVis.ModelHelper;
 
 namespace SciVis
 {

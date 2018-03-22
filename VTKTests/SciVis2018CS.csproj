@@ -74,6 +74,8 @@
   <ItemGroup>
     <Compile Include="Helper.cs" />
     <Compile Include="Model\MeteorData.cs" />
+    <Compile Include="Model\ModelHelper.cs" />
+    <Compile Include="Model\PointDataList.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
