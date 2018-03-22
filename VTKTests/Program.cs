@@ -1,22 +1,16 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using Kitware.VTK;
 using static SciVis.Helper;
+using static SciVis.ModelHelper;
+
 namespace SciVis
 {
-    public static class Helper
-    {
-        public static void Display(string format, params object[] args)
-        {
-            Console.WriteLine(String.Format(format, args));
-        }
-        public static void Display(string msg, Exception ex)
-        {
-            Console.WriteLine(msg + ex.Message + " " + ex.StackTrace );
-        }
-    }
+
     public class Program
     {
         public static string File = @"c:\Users\Tobiv\Neu\scivis\oceans11.lanl.gov\deepwaterimpact\yA31\300x300x300-AllScalars_resolution\pv_insitu_300x300x300_19021.vti";
@@ -27,9 +21,27 @@ namespace SciVis
             {
                 try
                 {
-                    Test_vti_Data();
-                    //ReadImageData(fileName);
-                    //Display_Image_Data(fileName);
+                    vtkImageData Data = null;
+                    try
+                    {
+                        Data = ReadInData(File);
+                    }
+                    catch (Exception ex)
+                    {
+                        Display("Error Reading: ", ex);
+                    }
+                    try
+                    {
+                        Analyse(Data);
+                    }
+                    catch (Exception ex)
+                    {
+                        Display("Error Analysing: ", ex);
+                    }
+                    
+                    //Test_vti_Data();
+                    //ReadImageData(File);
+                    //Display_Image_Data(File);
                 }
                 catch (Exception ex)
                 {
@@ -40,7 +52,31 @@ namespace SciVis
             }
             Console.ReadKey();
         }
-        #region Meteor File Stuff
+        public static vtkImageData ReadInData(string FileName)
+        {
+            vtkXMLImageDataReader Reader = new vtkXMLImageDataReader();
+            Reader.InitializeObjectBase();
+            Reader.SetFileName(FileName);
+            if (Reader.CanReadFile(FileName) == 0)
+            {
+                throw new Exception("Cannot Read File");
+            }
+            Reader.Update();
+            return Reader.GetOutput();
+        }
+        public static void Analyse(vtkImageData FileContent)
+        {
+            MeteorData Data = new MeteorData(FileContent.GetPointData());
+            float lastitem = 0;
+            foreach (var item in Data.rho)
+            {
+                if (lastitem != item)
+                {
+                    lastitem = item;
+                }
+            }
+        }
+        #region Meteor File Test Stuff
         private static void Test_vti_Data()
         {
             vtkXMLFileReadTester Tester = new vtkXMLFileReadTester();
@@ -119,6 +155,10 @@ namespace SciVis
             var tupnum = abstarray.GetNumberOfTuples();
             var value = abstarray.GetVariantValue(12345);
             var floatval = value.ToFloat();
+            for (int i = 0; i < valnum; i+=100)
+            {
+                Display("{0}:{1}",i,abstarray.GetVariantValue(i).ToFloat());
+            }
             currentReader.Dispose();
         }
 
@@ -300,54 +340,4 @@ namespace SciVis
         #endregion
     }
 
-    internal class vtkCommandTobi : vtkCommand
-    {
-        public vtkCommandTobi()
-        {
-        }
-
-        public vtkCommandTobi(IntPtr rawCppThis, bool callDisposalMethod, bool strong) : base(rawCppThis, callDisposalMethod, strong)
-        {
-        }
-
-        public override bool Equals(object obj)
-        {
-            return base.Equals(obj);
-        }
-
-        public override void Execute(vtkObject caller, uint eventId, IntPtr callData)
-        {
-            base.Execute(caller, eventId, callData);
-        }
-
-        public override void FastDelete()
-        {
-            base.FastDelete();
-        }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
-
-        public override int IsA(string type)
-        {
-            return base.IsA(type);
-        }
-
-        public override void Register(vtkObjectBase o)
-        {
-            base.Register(o);
-        }
-
-        public override string ToString()
-        {
-            return base.ToString();
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            base.Dispose(disposing);
-        }
-    }
 }
