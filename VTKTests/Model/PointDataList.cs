@@ -1,10 +1,8 @@
-﻿using System;
+﻿using Kitware.VTK;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static SciVis.Model.ModelHelper;
-using static SciVis.Helper;
+
 namespace SciVis.Model
 {
     public class PointDataList<T> : IEnumerable<T>

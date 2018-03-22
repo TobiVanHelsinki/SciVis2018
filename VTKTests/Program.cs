@@ -1,4 +1,5 @@
 ﻿using Kitware.VTK;
+using SciVis.Model;
 using System;
 using static SciVis.Helper;
 
