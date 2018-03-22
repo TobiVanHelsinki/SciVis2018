@@ -12,6 +12,10 @@ namespace SciVis
         {
             Console.WriteLine(String.Format(format, args));
         }
+        public static void Display(string msg, Exception ex)
+        {
+            Console.WriteLine(msg + ex.Message + " " + ex.StackTrace );
+        }
     }
     public class Program
     {
@@ -19,32 +23,103 @@ namespace SciVis
 
         static void Main(string[] args)
         {
-            Test_vti_Data();
-            //ReadImageData(fileName);
-            //Display_Image_Data(fileName);
+            while (true)
+            {
+                try
+                {
+                    Test_vti_Data();
+                    //ReadImageData(fileName);
+                    //Display_Image_Data(fileName);
+                }
+                catch (Exception ex)
+                {
+                    Display("Programm Error: ", ex);
+                    System.Diagnostics.Debugger.Break();
+                }
+            Console.ReadKey();
+            }
             Console.ReadKey();
         }
         #region Meteor File Stuff
         private static void Test_vti_Data()
         {
             vtkXMLFileReadTester Tester = new vtkXMLFileReadTester();
+            Tester.InitializeObjectBase();
             Tester.SetFileName(File);
             Display("Normal can read: {0}, type: {1}, date: {2}", Tester.TestReadFile(), Tester.GetFileVersion(), Tester.GetFileDataType());
+            //Display("Normal InitializeParser {0}", Tester.InitializeParser());
+            //try
+            //{
+            //    //Display("Normal Parse {0}", Tester.Parse());
+            //}
+            //catch (Exception ex)
+            //{
+            //    Display("Normal Parsing Error: ", ex);
+            //}
 
-            vtkXMLFileReadTester Tester2 = vtkXMLFileReadTester.New();
-            Tester2.SetFileName(File);
-            Display("staticnew can read: {0}, type: {1}, date: {2}", Tester2.TestReadFile(), Tester2.GetFileVersion(), Tester2.GetFileDataType());
-            
             var currentReader = vtkXMLImageDataReader.New();
+            currentReader.InitializeObjectBase();
+            //vtkCommand X = new vtkCommandTobi();
+            //X.InitializeObjectBase();
+            //currentReader.SetReaderErrorObserver(X);
             currentReader.SetFileName(File);
-            var a = currentReader.CanReadFile(File);
+            Display("Reader HasExecutive: {0}, CanReadFile {1}", currentReader.HasExecutive(), currentReader.CanReadFile(File));
+            currentReader.Update(); // here we read the file actually
+
+            var exe = currentReader.GetExecutive();
+            var xmlparser = currentReader.GetXMLParser();
+            Display("xmlparser.InitializeParser {0}", xmlparser?.InitializeParser());
+            Display("xmlparser.Parse {0}", xmlparser?.Parse());
+            Display("xmlparser.Progress {0}", xmlparser?.GetProgress());
+
             Display("reader NumberOfPoints: {0}, release date: {1}, Step: {2}, StepRange: {3}", currentReader.GetNumberOfPoints(), currentReader.GetReleaseDataFlag(), currentReader.GetTimeStep(), currentReader.GetTimeStepRange());
+            for (int i = 0; i < currentReader.GetTimeStepRange().Length; i++)
+            {
+                Display("TimeStepRange {0}: {1}", i, currentReader.GetTimeStepRange()[i]);
+            }
+            currentReader.UpdateDataObject();
+
             for (int i = 0; i < currentReader.GetNumberOfPointArrays(); i++)
             {
-                Display("PointArray{0} Name:{1}",i, currentReader.GetPointArrayName(i));
+                Display("PointArray{0} Name:{1}, NoEl:{2}", i, currentReader.GetPointArrayName(i), currentReader.GetOutput(i)?.GetNumberOfCells());
             }
-            var selec = currentReader.GetPointDataArraySelection();
-            //Display("PointArray{0} Name:{1}",selec.);
+            //currentReader.num
+            var outputdataset = currentReader.GetOutputAsDataSet(0);
+            var pointx= outputdataset?.GetPoint(123459);
+            var ncell = outputdataset?.GetNumberOfCells();
+            var nel = outputdataset?.GetNumberOfElements(0);
+            var npoints = outputdataset?.GetNumberOfPoints();
+            Display("DataSet: Cells: {0}, Points: {2}, \"0\"?: {1}",ncell, nel, npoints);
+
+            var outputdataobj = currentReader.GetOutputDataObject(0);
+            Display("DataObj: 0: {0}, 1: {2}, 2: {1}", outputdataobj?.GetNumberOfElements(0), outputdataobj?.GetNumberOfElements(1), outputdataobj?.GetNumberOfElements(2));
+
+            var output = currentReader.GetOutput(0);
+            ncell = output.GetNumberOfCells();
+            nel = output.GetNumberOfElements(0);
+            var nel1 = output.GetNumberOfElements(1);
+            npoints = output.GetNumberOfPoints();
+            Display("output: Cells: {0}, Points: {2}, \"0\"?: {1}, \"1\"?: {3}", ncell, nel, npoints, nel1);
+
+            var m = output.GetDataDimension();
+            var n = output.GetDataObjectType();
+            var o = output.GetCellData();
+            var p = output.GetFieldData();
+            var q = output.GetPointData();
+            var aa = p.GetAbstractArray(0);
+            var ab = p.GetNumberOfTuples();
+
+            var PointData = output?.GetPointData();
+            var arraynum = PointData?.GetNumberOfArrays();
+            var sc = PointData?.GetScalars();
+            var vec = PointData?.GetVectors();
+            var ten = PointData?.GetTensors();
+            var abstarray = PointData.GetAbstractArray(4);
+            var valnum = abstarray.GetNumberOfValues();
+            var tupnum = abstarray.GetNumberOfTuples();
+            var value = abstarray.GetVariantValue(12345);
+            var floatval = value.ToFloat();
+            currentReader.Dispose();
         }
 
         public static void ReadImageData()
@@ -223,5 +298,56 @@ namespace SciVis
             }
         }
         #endregion
+    }
+
+    internal class vtkCommandTobi : vtkCommand
+    {
+        public vtkCommandTobi()
+        {
+        }
+
+        public vtkCommandTobi(IntPtr rawCppThis, bool callDisposalMethod, bool strong) : base(rawCppThis, callDisposalMethod, strong)
+        {
+        }
+
+        public override bool Equals(object obj)
+        {
+            return base.Equals(obj);
+        }
+
+        public override void Execute(vtkObject caller, uint eventId, IntPtr callData)
+        {
+            base.Execute(caller, eventId, callData);
+        }
+
+        public override void FastDelete()
+        {
+            base.FastDelete();
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
+
+        public override int IsA(string type)
+        {
+            return base.IsA(type);
+        }
+
+        public override void Register(vtkObjectBase o)
+        {
+            base.Register(o);
+        }
+
+        public override string ToString()
+        {
+            return base.ToString();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+        }
     }
 }
