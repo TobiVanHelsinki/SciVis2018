@@ -85,10 +85,10 @@ namespace SciVis
             Display("{0}\t{1}\t{2}\t{3}", "JumpType", "Index", "lastitem", "item");
             for (int i = 0; i < Data.rho.Count; i++)
             {
-                if (i % 10000 == 0)
-                {
-                    GC.Collect(10);
-                }
+                //if (i % 10000 == 0)
+                //{
+                //    GC.Collect(10);
+                //}
                 var item = Data.rho[i].Value;
                 //long currentGC = GC.GetTotalMemory(true);
                 //if (lastgc > currentGC)
