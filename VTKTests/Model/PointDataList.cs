@@ -1,4 +1,5 @@
 ﻿using Kitware.VTK;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using static SciVis.Model.ModelHelper;
@@ -27,21 +28,20 @@ namespace SciVis.Model
         {
             get
             {
+                //return default;
                 try
                 {
-                    return (i, (T)Variant2Value(vtkAbstractArray.GetVariantValue(i)));
+                    object retval;
+                    using (var variant = vtkAbstractArray.GetVariantValue(i))
+                    {
+                        retval = Variant2Value(variant);
+                        //variant.Dispose(); //Dennohch OutOfMemoryException
+                    }
+                    return (i, (T)retval);
                 }
-                catch (System.Exception ex)
+                catch (OutOfMemoryException ex)
                 {
-                    try
-                    {
-                        var x = vtkAbstractArray.GetVariantValue(i);
-                        return default;
-                    }
-                    catch (System.Exception ex2)
-                    {
-                        return default;
-                    }
+                    return default;
                 }
             }
         }

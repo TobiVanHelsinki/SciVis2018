@@ -75,17 +75,27 @@ namespace SciVis
             void PrintAndAddResult((JumpType JT, int i, float lastitem, float item) p)
             {
                 //Display("{0}\t{1}\t{2}\t{3}", p.JT.ToString(), p.i, p.lastitem, p.item);
-                //Results.Add((p.JT, p.i, p.lastitem, p.item));
+                Results.Add((p.JT, p.i, p.lastitem, p.item));
             }
             var itemt = Data.rho[4319604].Value;
             itemt = Data.rho[4319605].Value;
             itemt = Data.rho[4319606].Value;
             itemt = Data.rho[5319606].Value;
-
+            long lastgc = 0;
             Display("{0}\t{1}\t{2}\t{3}", "JumpType", "Index", "lastitem", "item");
             for (int i = 0; i < Data.rho.Count; i++)
             {
+                if (i % 10000 == 0)
+                {
+                    GC.Collect(10);
+                }
                 var item = Data.rho[i].Value;
+                //long currentGC = GC.GetTotalMemory(true);
+                //if (lastgc > currentGC)
+                //{
+                //    currentGC = lastgc;
+                //}
+
                 if (lastitem > 1 && item < 1 && item > 0.9)
                 {
                     PrintAndAddResult((JumpType.One2ZeroNine, i, lastitem, item));

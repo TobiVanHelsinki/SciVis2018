@@ -78,7 +78,6 @@ namespace SciVis.Model
             {
                 throw new ArgumentOutOfRangeException();
             }
-            var.Dispose();
             return ret;
         }
 
