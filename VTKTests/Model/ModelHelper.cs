@@ -7,76 +7,79 @@ namespace SciVis.Model
     {
         public static object Variant2Value(vtkVariant var)
         {
+            object ret = null;
             if (var.IsDouble())
             {
-                return var.ToDouble();
+                ret = var.ToDouble();
             }
-            if (var.IsFloat())
+            else if (var.IsFloat())
             {
-                return var.ToFloat();
+                ret = var.ToFloat();
             }
-            if (var.IsInt())
+            else if (var.IsInt())
             {
-                return var.ToInt();
+                ret = var.ToInt();
             }
-            if (var.IsLong())
+            else if (var.IsLong())
             {
-                return var.ToLong();
+                ret = var.ToLong();
             }
-            if (var.IsLongLong())
+            else if (var.IsLongLong())
             {
-                return var.ToLongLong();
+                ret = var.ToLongLong();
             }
-            if (var.IsShort())
+            else if (var.IsShort())
             {
-                return var.ToShort();
+                ret = var.ToShort();
             }
-            if (var.Is__Int64())
+            else if (var.Is__Int64())
             {
-                return var.ToTypeInt64();
-            }
-
-            if (var.IsSignedChar())
-            {
-                return var.ToSignedChar();
-            }
-            if (var.IsString())
-            {
-                return var.ToString();
+                ret = var.ToTypeInt64();
             }
 
-            if (var.IsUnsignedInt())
+            else if (var.IsSignedChar())
             {
-                return var.ToUnsignedInt();
+                ret = var.ToSignedChar();
             }
-            if (var.IsUnsignedLong())
+            else if (var.IsString())
             {
-                return var.ToUnsignedLong();
+                ret = var.ToString();
             }
-            if (var.IsUnsignedLongLong())
+
+            else if (var.IsUnsignedInt())
             {
-                return var.ToUnsignedLongLong();
+                ret = var.ToUnsignedInt();
             }
-            if (var.IsUnsignedShort())
+            else if (var.IsUnsignedLong())
             {
-                return var.ToUnsignedShort();
+                ret = var.ToUnsignedLong();
             }
-            if (var.IsUnsigned__Int64())
+            else if (var.IsUnsignedLongLong())
             {
-                return var.ToTypeUInt64();
+                ret = var.ToUnsignedLongLong();
             }
-            if (var.IsUnsignedChar())
+            else if (var.IsUnsignedShort())
             {
-                return var.ToUnsignedChar();
+                ret = var.ToUnsignedShort();
             }
-            if (var.IsArray())
+            else if (var.IsUnsigned__Int64())
             {
-                return var.ToArray();
+                ret = var.ToTypeUInt64();
+            }
+            else if (var.IsUnsignedChar())
+            {
+                ret = var.ToUnsignedChar();
+            }
+            else if (var.IsArray())
+            {
+                ret = var.ToArray();
             }
             else
             {
                 throw new ArgumentOutOfRangeException();
             }
+            var.Dispose();
+            return ret;
         }
 
         public static Type Variant2Type(vtkVariant var)

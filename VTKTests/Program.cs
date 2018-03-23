@@ -1,6 +1,8 @@
 ﻿using Kitware.VTK;
 using SciVis.Model;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using static SciVis.Helper;
 
 namespace SciVis
@@ -51,18 +53,60 @@ namespace SciVis
             Reader.Dispose();
             return ret;
         }
+        enum JumpType
+        {
+            One2ZeroNine,
+            ZeroNine2Zero,
+            Zero2ZeroZero,
+            ZeroZero2One,
+        }
         public static void Analyse(vtkImageData FileContent)
         {
             MeteorData Data = new MeteorData(FileContent.GetPointData());
             float lastitem = 0;
-            foreach (var item in Data.rho)
+            //foreach (var item in Data.rho)
+            //{
+            //    if (lastitem != item.Value)
+            //    {
+            //        lastitem = item.Value;
+            //    }
+            //}
+            List<(JumpType Type, int index, float val1, float val2)> Results = new List<(JumpType Type, int index, float val1, float val2)>();
+            void PrintAndAddResult((JumpType JT, int i, float lastitem, float item) p)
             {
-                if (lastitem != item)
+                //Display("{0}\t{1}\t{2}\t{3}", p.JT.ToString(), p.i, p.lastitem, p.item);
+                //Results.Add((p.JT, p.i, p.lastitem, p.item));
+            }
+            var itemt = Data.rho[4319604].Value;
+            itemt = Data.rho[4319605].Value;
+            itemt = Data.rho[4319606].Value;
+            itemt = Data.rho[5319606].Value;
+
+            Display("{0}\t{1}\t{2}\t{3}", "JumpType", "Index", "lastitem", "item");
+            for (int i = 0; i < Data.rho.Count; i++)
+            {
+                var item = Data.rho[i].Value;
+                if (lastitem > 1 && item < 1 && item > 0.9)
                 {
-                    lastitem = item;
+                    PrintAndAddResult((JumpType.One2ZeroNine, i, lastitem, item));
                 }
+                if (item > 1 && lastitem < 1 && lastitem > 0.9)
+                {
+                    PrintAndAddResult((JumpType.ZeroNine2Zero, i, lastitem, item));
+                }
+                if (lastitem < 0.1 && item < 0.000001)
+                {
+                    PrintAndAddResult((JumpType.Zero2ZeroZero, i, lastitem, item));
+                }
+                if (lastitem < 0.1 && item > 1)
+                {
+                    PrintAndAddResult((JumpType.ZeroZero2One, i, lastitem, item));
+                }
+                lastitem = item;
             }
         }
+
+
         #region Meteor File Test Stuff
         private static void Test_vti_Data()
         {
