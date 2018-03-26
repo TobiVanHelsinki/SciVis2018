@@ -2,6 +2,7 @@
 using SciVis.Model;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using static SciVis.Helper;
 
@@ -14,6 +15,9 @@ namespace SciVis
 
         static void Main(string[] args)
         {
+            //Test_vti_Data();
+            //ReadImageData(File);
+            //Display_Image_Data(File);
             vtkImageData Data = null;
             try
             {
@@ -22,21 +26,18 @@ namespace SciVis
             catch (Exception ex)
             {
                 Display("Error Reading: ", ex);
-                System.Diagnostics.Debugger.Break();
+                Debugger.Break();
             }
             try
             {
-                Analyse(Data);
+                //Analyse(Data);
+                AnalyseLayer(Data);
             }
             catch (Exception ex)
             {
                 Display("Error Analysing: ", ex);
-                System.Diagnostics.Debugger.Break();
+                Debugger.Break();
             }
-            //Test_vti_Data();
-            //ReadImageData(File);
-            //Display_Image_Data(File);
-            //System.Diagnostics.Debugger.Break();
             //Console.ReadKey();
         }
         public static vtkImageData ReadInData(string FileName)
@@ -116,6 +117,32 @@ namespace SciVis
             }
         }
 
+        public static void AnalyseLayer(vtkImageData FileContent)
+        {
+            MeteorData Data = new MeteorData(FileContent.GetPointData());
+            List<(int, int, int, float)> Counter_ValSmaller = new List<(int, int, int, float)>();
+            for (int z = 0; z < 50; z++)
+            {
+                Display("newZ");
+                for (int y = 0; y < 300; y++)
+                {
+                    for (int x = 0; x < 300; x++)
+                    {
+                        float val = Data.rho.GetPoint(x, y, z).Value;
+                        if (val < 1)
+                        {
+                            //Debugger.Break();
+                            Counter_ValSmaller.Add((x,y,z, val));
+                        }
+                    }
+                }
+            }
+            Display("Wrong Items: {0}", Counter_ValSmaller.Count());
+            foreach (var item in Counter_ValSmaller)
+            {
+                Display("Lower then 1: {3} at {0},{1},{2}", item.Item1, item.Item2, item.Item3, item.Item4);
+            }
+        }
 
         #region Meteor File Test Stuff
         private static void Test_vti_Data()

@@ -28,24 +28,19 @@ namespace SciVis.Model
         {
             get
             {
-                //return default;
-                try
+                object retval;
+                using (var variant = vtkAbstractArray.GetVariantValue(i))
                 {
-                    object retval;
-                    using (var variant = vtkAbstractArray.GetVariantValue(i))
-                    {
-                        retval = Variant2Value(variant);
-                        //variant.Dispose(); //Dennohch OutOfMemoryException
-                    }
-                    return (i, (T)retval);
+                    retval = Variant2Value(variant);
+                    //variant.Dispose(); //Dennohch OutOfMemoryException
                 }
-                catch (OutOfMemoryException ex)
-                {
-                    return default;
-                }
+                return (i, (T)retval);
             }
         }
-
+        public (int Index, T Value) GetPoint(int x, int y, int z)
+        {
+            return this[x * 300 + z * 300 * 300 + y];
+        }
         IEnumerator IEnumerable.GetEnumerator()
         {
             for (int i = 0; i < vtkAbstractArray.GetNumberOfValues(); i++)
