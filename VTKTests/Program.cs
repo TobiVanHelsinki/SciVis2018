@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using static SciVis.Helper;
 
 namespace SciVis
@@ -11,10 +13,25 @@ namespace SciVis
 
     public class Program
     {
-        public static string File = @"c:\Users\Tobiv\Neu\scivis\oceans11.lanl.gov\deepwaterimpact\yA31\300x300x300-AllScalars_resolution\pv_insitu_300x300x300_19021.vti";
+        public static string Path = @"c:\Users\Tobiv\Neu\scivis\oceans11.lanl.gov\deepwaterimpact\yA31\300x300x300-AllScalars_resolution\";
+        public static string FileName = @"pv_insitu_300x300x300_00000.vti";
+        public static string File { get => Path + FileName; }
 
         static void Main(string[] args)
         {
+            if (!Debugger.IsAttached)
+            {
+                if (args.Length > 0)
+                {
+                    FileName = args[0];
+                }
+                else
+                {
+                    Display("No Parameter");
+                    return;
+                }
+            }
+
             vtkOutputWindow.SetGlobalWarningDisplay(0);
             Console.SetWindowSize(Console.WindowWidth - 20, Console.WindowHeight);
             Console.SetBufferSize(Console.WindowWidth, Console.WindowHeight);
@@ -31,6 +48,7 @@ namespace SciVis
                 Display("Error Reading: ", ex);
                 Console.Beep(500, 1500);
                 if (Debugger.IsAttached) Debugger.Break();
+                return;
             }
             try
             {
@@ -42,10 +60,11 @@ namespace SciVis
                 Display("Error Analysing: ", ex);
                 Console.Beep(500, 1500);
                 if (Debugger.IsAttached) Debugger.Break();
+                return;
             }
-            //Console.ReadKey();
-            Console.Beep(3000, 1500);
+            Console.Beep(3000, 500);
             if (Debugger.IsAttached) Debugger.Break();
+            //Console.ReadKey();
         }
         public static vtkImageData ReadInData(string FileName)
         {
@@ -127,20 +146,23 @@ namespace SciVis
         public static void AnalyseLayer(vtkImageData FileContent)
         {
             MeteorData Data = new MeteorData(FileContent.GetPointData());
+            var CurrentList = Data.rho;
             List<(int, int, int, float)> Counter_ValOne = new List<(int, int, int, float)>();
             List<(int, int, int, float)> Counter_ValNearlyOne = new List<(int, int, int, float)>();
             List<(int, int, int, float)> Counter_ValMiddle = new List<(int, int, int, float)>();
             List<(int, int, int, float)> Counter_ValBottom = new List<(int, int, int, float)>();
             List<(int, int, int, float)> Counter_ValHell = new List<(int, int, int, float)>();
-            for (int z = 0; z < 300; z++)
+            int maxZ = 300;
+            for (int z = 0; z < maxZ; z++)
             {
                 Display("newZ: "+z);
                 Console.CursorTop--;
+                //Parallel.For(0, 300,(y) =>
                 for (int y = 0; y < 300; y++)
                 {
                     for (int x = 0; x < 300; x++)
                     {
-                        float val = Data.rho.GetPoint(x, y, z).Value;
+                        float val = CurrentList.GetPoint(x, y, z).Value;
                         if (val >= 1)
                         {
                             Counter_ValOne.Add((x, y, z, val));
@@ -162,14 +184,21 @@ namespace SciVis
                             Counter_ValHell.Add((x, y, z, val));
                         }
                     }
-                }
+                }/*);*/
             }
-            DisplayBounds("One", Counter_ValOne);
-            DisplayBounds("NearlyTop", Counter_ValNearlyOne);
-            DisplayBounds("Middle", Counter_ValMiddle);
-            DisplayBounds("Bottom", Counter_ValBottom);
-            DisplayBounds("Hell", Counter_ValHell);
-            
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true, true);
+            int ProcessedData = Counter_ValOne.Count + Counter_ValNearlyOne.Count + Counter_ValMiddle.Count + Counter_ValBottom.Count + Counter_ValHell.Count;
+            Display(CurrentList.Name + "-Werte " + FileName);
+            DisplayBounds(">1", Counter_ValOne);
+            DisplayBounds("0.9-1", Counter_ValNearlyOne);
+            DisplayBounds("0.1-0.9", Counter_ValMiddle);
+            DisplayBounds("0.001-0.1", Counter_ValBottom);
+            DisplayBounds("<0.001", Counter_ValHell);
+            DrawBounds(">1", maxZ, Counter_ValOne);
+            DrawBounds("0.9-1", maxZ, Counter_ValNearlyOne);
+            DrawBounds("0.1-0.9", maxZ, Counter_ValMiddle);
+            DrawBounds("0.001-0.1", maxZ, Counter_ValBottom);
+            DrawBounds("<0.001", maxZ, Counter_ValHell);
             //int mod = 0;
             //foreach (var item in Counter_ValSmaller)
             //{
@@ -181,10 +210,50 @@ namespace SciVis
             //}
         }
 
-        private static void DisplayBounds(string v, List<(int, int, int, float)> Counter_List)
+        private static void DisplayBounds(string title, List<(int, int, int, float)> Counter_List)
         {
-            Display(v + " Items: {0} Upper Bound {1} Lower Bound {2}", Counter_List.Count(), Counter_List.MinOrDefault(x => x.Item3), Counter_List.MaxOrDefault(x => x.Item3));
-
+            StringBuilder nv = new StringBuilder();
+            foreach (var item in title.Take(10))
+            {
+                nv.Append(item);
+            }
+            string s = String.Format(nv + " Items:{0," + (8 + 10 - nv.Length) + "} Upper Bound {1,3} Lower Bound {2,3}", Counter_List.Count(), Counter_List.MinOrDefault(x => x.Item3), Counter_List.MaxOrDefault(x => x.Item3));
+            Display(s);
+        }
+        private static void DrawBounds(string title, int whole, List<(int, int, int, float)> Counter_List)
+        {
+            int rel = whole > 30 ? 10 : 1;
+            StringBuilder nv = new StringBuilder();
+            foreach (var item in title.Take(10))
+            {
+                nv.Append(item);
+            }
+            nv.Append(' ', 10 - nv.Length);
+            nv.Append('|');
+            int min = Counter_List.MinOrDefault(x => x.Item3);
+            int max = Counter_List.MaxOrDefault(x => x.Item3);
+            int FirstLength = min / rel;
+            int SecondLength = (max - min) / rel;
+            int ThirdLength = (whole - max) / rel;
+            if (SecondLength == 0 && min != 0 && max != 0)
+            {
+                SecondLength = 1;
+                if (ThirdLength > 0)
+                {
+                    ThirdLength--;
+                }
+                else
+                {
+                    FirstLength--;
+                }
+            }
+            var b = new StringBuilder();
+            b.Append(' ', FirstLength);
+            b.Append('#', SecondLength);
+            b.Append(' ', ThirdLength);
+            string s = nv + b.ToString();
+            Console.SetBufferSize(s.Length < Console.WindowWidth? Console.WindowWidth : (s.Length + 10), Console.WindowHeight);
+            Display(s);
         }
 
 

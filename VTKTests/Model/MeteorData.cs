@@ -24,7 +24,7 @@ namespace SciVis.Model
         public PointDataList<Single> v02;
         public PointDataList<Single> v03;
 
-        vtkPointData PointData;
+        public vtkPointData PointData;
         public MeteorData(vtkPointData iPointData)
         {
             PointData = iPointData;

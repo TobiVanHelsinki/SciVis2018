@@ -8,13 +8,13 @@ namespace SciVis.Model
 {
     public class PointDataList<T> : IEnumerable<(int Index, T Value)>
     {
-        private vtkAbstractArray vtkAbstractArray;
-
+        public vtkAbstractArray vtkAbstractArray;
+        public string Name { get => vtkAbstractArray.GetName(); set => vtkAbstractArray.SetName(value); }
         public long Count => vtkAbstractArray.GetNumberOfValues();
 
         public PointDataList(vtkAbstractArray vtkAbstractArray)
         {
-            this.vtkAbstractArray = vtkAbstractArray;
+            this.vtkAbstractArray = vtkAbstractArray ?? throw new ArgumentNullException(nameof(vtkAbstractArray));
         }
         public IEnumerator<(int Index, T Value)> GetEnumerator()
         {
@@ -29,11 +29,9 @@ namespace SciVis.Model
             get
             {
                 object retval;
-                using (var variant = vtkAbstractArray.GetVariantValue(i))
-                {
-                    retval = Variant2Value(variant);
-                    //variant.Dispose(); //Dennohch OutOfMemoryException
-                }
+                var variant = vtkAbstractArray.GetVariantValue(i);
+                retval = Variant2Value(variant);
+                //variant.Dispose(); //Dennohch OutOfMemoryException
                 return (i, (T)retval);
             }
         }
