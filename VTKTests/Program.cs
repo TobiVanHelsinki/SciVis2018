@@ -15,6 +15,9 @@ namespace SciVis
 
         static void Main(string[] args)
         {
+            vtkOutputWindow.SetGlobalWarningDisplay(0);
+            Console.SetWindowSize(Console.WindowWidth - 20, Console.WindowHeight);
+            Console.SetBufferSize(Console.WindowWidth, Console.WindowHeight);
             //Test_vti_Data();
             //ReadImageData(File);
             //Display_Image_Data(File);
@@ -26,7 +29,8 @@ namespace SciVis
             catch (Exception ex)
             {
                 Display("Error Reading: ", ex);
-                Debugger.Break();
+                Console.Beep(500, 1500);
+                if (Debugger.IsAttached) Debugger.Break();
             }
             try
             {
@@ -36,9 +40,12 @@ namespace SciVis
             catch (Exception ex)
             {
                 Display("Error Analysing: ", ex);
-                Debugger.Break();
+                Console.Beep(500, 1500);
+                if (Debugger.IsAttached) Debugger.Break();
             }
             //Console.ReadKey();
+            Console.Beep(3000, 1500);
+            if (Debugger.IsAttached) Debugger.Break();
         }
         public static vtkImageData ReadInData(string FileName)
         {
@@ -120,29 +127,66 @@ namespace SciVis
         public static void AnalyseLayer(vtkImageData FileContent)
         {
             MeteorData Data = new MeteorData(FileContent.GetPointData());
-            List<(int, int, int, float)> Counter_ValSmaller = new List<(int, int, int, float)>();
-            for (int z = 0; z < 50; z++)
+            List<(int, int, int, float)> Counter_ValOne = new List<(int, int, int, float)>();
+            List<(int, int, int, float)> Counter_ValNearlyOne = new List<(int, int, int, float)>();
+            List<(int, int, int, float)> Counter_ValMiddle = new List<(int, int, int, float)>();
+            List<(int, int, int, float)> Counter_ValBottom = new List<(int, int, int, float)>();
+            List<(int, int, int, float)> Counter_ValHell = new List<(int, int, int, float)>();
+            for (int z = 0; z < 300; z++)
             {
-                Display("newZ");
+                Display("newZ: "+z);
+                Console.CursorTop--;
                 for (int y = 0; y < 300; y++)
                 {
                     for (int x = 0; x < 300; x++)
                     {
                         float val = Data.rho.GetPoint(x, y, z).Value;
-                        if (val < 1)
+                        if (val >= 1)
                         {
-                            //Debugger.Break();
-                            Counter_ValSmaller.Add((x,y,z, val));
+                            Counter_ValOne.Add((x, y, z, val));
+                        }
+                        else if (val >= 0.9 && val < 1)
+                        {
+                            Counter_ValNearlyOne.Add((x, y, z, val));
+                        }
+                        else if (val >= 0.1 && val < 0.9)
+                        {
+                            Counter_ValMiddle.Add((x, y, z, val));
+                        }
+                        else if (val >= 0.001 && val < 0.1)
+                        {
+                            Counter_ValBottom.Add((x, y, z, val));
+                        }
+                        else if (val < 0.001)
+                        {
+                            Counter_ValHell.Add((x, y, z, val));
                         }
                     }
                 }
             }
-            Display("Wrong Items: {0}", Counter_ValSmaller.Count());
-            foreach (var item in Counter_ValSmaller)
-            {
-                Display("Lower then 1: {3} at {0},{1},{2}", item.Item1, item.Item2, item.Item3, item.Item4);
-            }
+            DisplayBounds("One", Counter_ValOne);
+            DisplayBounds("NearlyTop", Counter_ValNearlyOne);
+            DisplayBounds("Middle", Counter_ValMiddle);
+            DisplayBounds("Bottom", Counter_ValBottom);
+            DisplayBounds("Hell", Counter_ValHell);
+            
+            //int mod = 0;
+            //foreach (var item in Counter_ValSmaller)
+            //{
+            //    mod++;
+            //    //if (mod % 30 == 0)
+            //    {
+            //        Display("Lower then 1: {3} at {0},{1},{2}", item.Item1, item.Item2, item.Item3, item.Item4);
+            //    }
+            //}
         }
+
+        private static void DisplayBounds(string v, List<(int, int, int, float)> Counter_List)
+        {
+            Display(v + " Items: {0} Upper Bound {1} Lower Bound {2}", Counter_List.Count(), Counter_List.MinOrDefault(x => x.Item3), Counter_List.MaxOrDefault(x => x.Item3));
+
+        }
+
 
         #region Meteor File Test Stuff
         private static void Test_vti_Data()

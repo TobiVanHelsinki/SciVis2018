@@ -10,7 +10,7 @@ namespace SciVis.Model
     {
         private vtkAbstractArray vtkAbstractArray;
 
-        public int Count => vtkAbstractArray.GetNumberOfValues();
+        public long Count => vtkAbstractArray.GetNumberOfValues();
 
         public PointDataList(vtkAbstractArray vtkAbstractArray)
         {
@@ -39,7 +39,7 @@ namespace SciVis.Model
         }
         public (int Index, T Value) GetPoint(int x, int y, int z)
         {
-            return this[x * 300 + z * 300 * 300 + y];
+            return this[z * 300 + y * 300 * 300 + x];
         }
         IEnumerator IEnumerable.GetEnumerator()
         {
