@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using static SciVis.Helper;
 
 namespace SciVis
@@ -14,27 +13,23 @@ namespace SciVis
     public class Program
     {
         public static string Path = @"c:\Users\Tobiv\Neu\scivis\oceans11.lanl.gov\deepwaterimpact\yA31\300x300x300-AllScalars_resolution\";
-        public static string FileName = @"pv_insitu_300x300x300_00000.vti";
+        public static string FileName = @"pv_insitu_300x300x300_07920.vti";
         public static string File { get => Path + FileName; }
 
         static void Main(string[] args)
         {
-            if (!Debugger.IsAttached)
+            if (args.Length > 0)
             {
-                if (args.Length > 0)
-                {
-                    FileName = args[0];
-                }
-                else
-                {
-                    Display("No Parameter");
-                    return;
-                }
+                //Display("File: {0}", args[0]);
+                FileName = args[0];
             }
 
             vtkOutputWindow.SetGlobalWarningDisplay(0);
-            Console.SetWindowSize(Console.WindowWidth - 20, Console.WindowHeight);
-            Console.SetBufferSize(Console.WindowWidth, Console.WindowHeight);
+            if (Debugger.IsAttached)
+            {
+                Console.SetWindowSize(Console.WindowWidth - 20, Console.WindowHeight);
+                Console.SetBufferSize(Console.WindowWidth, Console.BufferHeight);
+            }
             //Test_vti_Data();
             //ReadImageData(File);
             //Display_Image_Data(File);
@@ -52,8 +47,10 @@ namespace SciVis
             }
             try
             {
+                //AnalyseMat(Data);
+                AnalyseWater(Data);
                 //Analyse(Data);
-                AnalyseLayer(Data);
+                //AnalyseLayer(Data);
             }
             catch (Exception ex)
             {
@@ -77,72 +74,51 @@ namespace SciVis
             }
             Reader.Update();
             var ret = Reader.GetOutput();
-            Reader.Dispose();
+            Reader?.Dispose();
             return ret;
-        }
-        enum JumpType
-        {
-            One2ZeroNine,
-            ZeroNine2Zero,
-            Zero2ZeroZero,
-            ZeroZero2One,
         }
         public static void Analyse(vtkImageData FileContent)
         {
+            (long Index, Single Value) BiggestValue = (0, 0);
             MeteorData Data = new MeteorData(FileContent.GetPointData());
-            float lastitem = 0;
-            //foreach (var item in Data.rho)
-            //{
-            //    if (lastitem != item.Value)
-            //    {
-            //        lastitem = item.Value;
-            //    }
-            //}
-            List<(JumpType Type, int index, float val1, float val2)> Results = new List<(JumpType Type, int index, float val1, float val2)>();
-            void PrintAndAddResult((JumpType JT, int i, float lastitem, float item) p)
+            BiggestValue = (0, 0);
+            foreach (var item in Data.rho)
             {
-                //Display("{0}\t{1}\t{2}\t{3}", p.JT.ToString(), p.i, p.lastitem, p.item);
-                Results.Add((p.JT, p.i, p.lastitem, p.item));
+                if (item.Value > BiggestValue.Value)
+                {
+                    BiggestValue = item;
+                }
             }
-            var itemt = Data.rho[4319604].Value;
-            itemt = Data.rho[4319605].Value;
-            itemt = Data.rho[4319606].Value;
-            itemt = Data.rho[5319606].Value;
-            long lastgc = 0;
-            Display("{0}\t{1}\t{2}\t{3}", "JumpType", "Index", "lastitem", "item");
-            for (int i = 0; i < Data.rho.Count; i++)
+            Display("Densest Point at {0} is {1}", BiggestValue.Index, BiggestValue.Value);
+            BiggestValue = (0, 0);
+            foreach (var item in Data.prs)
             {
-                //if (i % 10000 == 0)
-                //{
-                //    GC.Collect(10);
-                //}
-                var item = Data.rho[i].Value;
-                //long currentGC = GC.GetTotalMemory(true);
-                //if (lastgc > currentGC)
-                //{
-                //    currentGC = lastgc;
-                //}
-
-                if (lastitem > 1 && item < 1 && item > 0.9)
+                if (item.Value > BiggestValue.Value)
                 {
-                    PrintAndAddResult((JumpType.One2ZeroNine, i, lastitem, item));
+                    BiggestValue = item;
                 }
-                if (item > 1 && lastitem < 1 && lastitem > 0.9)
+            }
+            Display("Preasurest Point at {0} is {1}", BiggestValue.Index, BiggestValue.Value);
+        }
+        public static void AnalyseMat(vtkImageData FileContent)
+        {
+            MeteorData Data = new MeteorData(FileContent.GetPointData());
+            var DiffrenVals = new HashSet<float>();
+            for (int x = 0; x < 300; x++)
+            {
+                DisplayProgress("NewX", x);
+                for (int y = 0; y < 300; y++)
                 {
-                    PrintAndAddResult((JumpType.ZeroNine2Zero, i, lastitem, item));
+                    var p = Data.mat.GetPoint(x, y, 150);
+                    DiffrenVals.Add(p.Value);
                 }
-                if (lastitem < 0.1 && item < 0.000001)
-                {
-                    PrintAndAddResult((JumpType.Zero2ZeroZero, i, lastitem, item));
-                }
-                if (lastitem < 0.1 && item > 1)
-                {
-                    PrintAndAddResult((JumpType.ZeroZero2One, i, lastitem, item));
-                }
-                lastitem = item;
+            }
+            DisplayRemoveLines();
+            foreach (var item in DiffrenVals)
+            {
+                Display("MaterialIDs: {0}", item);
             }
         }
-
         public static void AnalyseLayer(vtkImageData FileContent)
         {
             MeteorData Data = new MeteorData(FileContent.GetPointData());
@@ -155,8 +131,7 @@ namespace SciVis
             int maxZ = 300;
             for (int z = 0; z < maxZ; z++)
             {
-                Display("newZ: "+z);
-                Console.CursorTop--;
+                DisplayProgress("", z);
                 //Parallel.For(0, 300,(y) =>
                 for (int y = 0; y < 300; y++)
                 {
@@ -208,6 +183,39 @@ namespace SciVis
             //        Display("Lower then 1: {3} at {0},{1},{2}", item.Item1, item.Item2, item.Item3, item.Item4);
             //    }
             //}
+        }
+
+
+        public static void AnalyseWater(vtkImageData FileContent)
+        {
+            const int LowerZBorder = 0;
+            const int HigherZBorder = 300;
+            MeteorData Data = new MeteorData(FileContent.GetPointData());
+            FileContent.Dispose();
+            var materialOccurrences = new long[4];
+
+            for (int z = LowerZBorder; z < HigherZBorder; z++)
+            {
+                DisplayProgress("newZ ", z - LowerZBorder);
+                for (int y = 0; y < 300; y++)
+                {
+                    for (int x = 0; x < 300; x++)
+                    {
+                        float val = Data.mat.GetPoint(x, y, z).Value;
+                        materialOccurrences[(int)val]++;
+                    }
+                }
+            }
+            DisplayRemoveLines();
+            Display("Material {0,1} {1,-1} at {2}", "Total","Relative", FileName);
+            double s = materialOccurrences.Sum(); //(300d*300d*(HigherZBorder- LowerZBorder));
+            for (int i = 0; i < materialOccurrences.Length; i++)
+            {
+                long val = materialOccurrences[i];
+                double rel = val / s;
+                Display("{0, -5} {1,8} {2,-1:0.###########}", i, val, rel);
+            }
+            
         }
 
         private static void DisplayBounds(string title, List<(int, int, int, float)> Counter_List)

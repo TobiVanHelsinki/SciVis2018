@@ -25,7 +25,7 @@ namespace SciVis
                 return default;
             }
         }
-        public static int MaxOrDefault<TSource>(this IEnumerable<TSource> source, Func<TSource, int> selector)
+        public static T MaxOrDefault<TSource, T>(this IEnumerable<TSource> source, Func<TSource, T> selector)
         {
             try
             {
@@ -48,6 +48,22 @@ namespace SciVis
             Console.WriteLine(msg + ex.Message + " " + ex.StackTrace);
         }
 
+        public static void DisplayProgress(string v, int z)
+        {
+            if (z != 0)
+            {
+                Console.CursorTop--;
+            }
+            Display(v + z);
+        }
+        public static void DisplayRemoveLines(int Count = 1)
+        {
+            for (int i = 0; i < Count; i++)
+            {
+                Console.CursorTop--;
+                Console.WriteLine();
+            }
+        }
         public static void DebuggerBreak()
         {
             if (Debugger.IsAttached)
