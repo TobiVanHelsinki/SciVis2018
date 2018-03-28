@@ -12,7 +12,9 @@ namespace SciVis
 
     public class Program
     {
-        public static string Path = @"c:\Users\Tobiv\Neu\scivis\oceans11.lanl.gov\deepwaterimpact\yA31\300x300x300-AllScalars_resolution\";
+        public static string PathTobi = @"c:\Users\Tobiv\Neu\scivis\oceans11.lanl.gov\deepwaterimpact\yA31\300x300x300-AllScalars_resolution\";
+        public static string PathGreogr = @"c:\U...1\300x300x300-AllScalars_resolution\";
+        public static string Path = PathTobi;
         public static string FileName = @"pv_insitu_300x300x300_07920.vti";
         public static string File { get => Path + FileName; }
 
