@@ -47,8 +47,9 @@ namespace SciVis.Model
             }
         }
         /// <summary>
-        /// tested, converts and Index to x,y,z coordinates in an 300*300*300 Space
+        /// tested, converts an vtk Index to x,y,z coordinates in an 300*300*300 Space
         /// </summary>
+        /// <remarks>x,y,z isn't vtk order, but no worry, for you all is fine</remarks>
         /// <param name="index"></param>
         /// <returns></returns>
         public static (long x, long y, long z) Index2Coords(long index)
@@ -59,8 +60,9 @@ namespace SciVis.Model
             return (x, y, z);
         }
         /// <summary>
-        /// tested, convert x,y,z coordinates in an 300*300*300 Space into a continuing index
+        /// tested, convert x,y,z coordinates in an 300*300*300 Space into a continuing index for vtk
         /// </summary>
+        /// <remarks>x,y,z isn't vtk order, but no worry, for you all is fine</remarks>
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <param name="z"></param>
