@@ -5,6 +5,11 @@ namespace SciVis.Model
 {
     public static class ModelHelper
     {
+        /// <summary>
+        /// does stupid vtk work for you. you give him a variant and it returns you the value (unfortunaly as object. Don't like it? Well, life is hard.)
+        /// </summary>
+        /// <param name="var"></param>
+        /// <returns></returns>
         public static object Variant2Value(vtkVariant var)
         {
             object ret = null;
@@ -81,6 +86,11 @@ namespace SciVis.Model
             return ret;
         }
 
+        /// <summary>
+        /// does stupid vtk work for you. you give him a variant and it tries to figure out what type this is. works correct in nearly 60%.
+        /// </summary>
+        /// <param name="var"></param>
+        /// <returns></returns>
         public static Type Variant2Type(vtkVariant var)
         {
             if (var.IsDouble())

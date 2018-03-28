@@ -6,6 +6,10 @@ using static SciVis.Model.ModelHelper;
 
 namespace SciVis.Model
 {
+    /// <summary>
+    /// a wrapper for an vtkAbstractArray
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class PointDataList<T> : IEnumerable<(long Index, T Value)>
     {
         /// <summary>

@@ -1,12 +1,11 @@
 ﻿using Kitware.VTK;
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using static SciVis.Model.ModelHelper;
-using static SciVis.Helper;
 
 namespace SciVis.Model
 {
+    /// <summary>
+    /// A Wrapper for the VTK Meteor Data
+    /// </summary>
     public class MeteorData
     {
         /// <summary>

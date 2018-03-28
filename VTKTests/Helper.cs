@@ -39,15 +39,30 @@ namespace SciVis
     }
     public static partial class Helper
     {
+        /// <summary>
+        /// redirection to Console.WriteLine
+        /// </summary>
+        /// <param name="format"></param>
+        /// <param name="args"></param>
         public static void Display(string format, params object[] args)
         {
             Console.WriteLine(String.Format(format, args));
         }
+        /// <summary>
+        /// redirection to Console.WriteLine
+        /// </summary>
+        /// <param name="msg"></param>
+        /// <param name="ex"></param>
         public static void Display(string msg, Exception ex)
         {
             Console.WriteLine(msg + ex.Message + " " + ex.StackTrace);
         }
 
+        /// <summary>
+        /// overrides the last console line with v if z != 0
+        /// </summary>
+        /// <param name="v"></param>
+        /// <param name="z"></param>
         public static void DisplayProgress(string v, int z)
         {
             if (z != 0)
@@ -56,6 +71,11 @@ namespace SciVis
             }
             Display(v + z);
         }
+
+        /// <summary>
+        /// removes the given lines of console output
+        /// </summary>
+        /// <param name="Count"></param>
         public static void DisplayRemoveLines(int Count = 1)
         {
             for (int i = 0; i < Count; i++)
@@ -64,6 +84,10 @@ namespace SciVis
                 Console.WriteLine();
             }
         }
+
+        /// <summary>
+        /// break if attached
+        /// </summary>
         public static void DebuggerBreak()
         {
             if (Debugger.IsAttached)
