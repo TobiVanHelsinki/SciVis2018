@@ -50,7 +50,7 @@ namespace SciVis
             try
             {
                 //AnalyseMat(Data);
-                AnalyseWater(Data);
+                AnalyseMaterials(Data);
                 //Analyse(Data);
                 //AnalyseLayer(Data);
             }
@@ -74,6 +74,7 @@ namespace SciVis
             {
                 throw new Exception("Cannot Read File");
             }
+            Display("Start Reading File");
             Reader.Update();
             var ret = Reader.GetOutput();
             Reader?.Dispose();
@@ -102,25 +103,7 @@ namespace SciVis
             }
             Display("Preasurest Point at {0} is {1}", BiggestValue.Index, BiggestValue.Value);
         }
-        public static void AnalyseMat(vtkImageData FileContent)
-        {
-            MeteorData Data = new MeteorData(FileContent.GetPointData());
-            var DiffrenVals = new HashSet<float>();
-            for (int x = 0; x < 300; x++)
-            {
-                DisplayProgress("NewX", x);
-                for (int y = 0; y < 300; y++)
-                {
-                    var p = Data.mat.GetPoint(x, y, 150);
-                    DiffrenVals.Add(p.Value);
-                }
-            }
-            DisplayRemoveLines();
-            foreach (var item in DiffrenVals)
-            {
-                Display("MaterialIDs: {0}", item);
-            }
-        }
+
         public static void AnalyseLayer(vtkImageData FileContent)
         {
             MeteorData Data = new MeteorData(FileContent.GetPointData());
@@ -187,8 +170,7 @@ namespace SciVis
             //}
         }
 
-
-        public static void AnalyseWater(vtkImageData FileContent)
+        public static void AnalyseMaterials(vtkImageData FileContent)
         {
             const int LowerZBorder = 0;
             const int HigherZBorder = 300;
