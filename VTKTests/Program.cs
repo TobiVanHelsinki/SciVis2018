@@ -105,7 +105,39 @@ namespace SciVis
             Display("Preasurest Point at {0} is {1}", BiggestValue.Index, BiggestValue.Value);
         }
 
-        static void AnalyseRho(vtkImageData FileContent)
+        // Erfasst alle Grenzpunkte eines bestimmten Materials und stellt sie in einer Bordermap fest
+        private static void BorderScan(vtkImageData FileContent)
+        {
+            MeteorData Data = new MeteorData(FileContent.GetPointData());
+            List<long> BorderMap = new List<long>();
+
+            //legt Material, nachdem gesucht wird, fest
+            float Material = 3;
+            bool BodyFound = false;
+
+            for(int x = 0; x <= 300; x++)
+            {
+                for (int y = 0; y <= 300; y++)
+                {
+                    for (int z = 0; z <= 300; z++)
+                    {
+                        var (Index, Value) = Data.mat.GetPoint(x, y, z);
+                        if (Material == Value && BodyFound == false)
+                        {
+                            BorderMap.Add(Index);
+                            BodyFound = true;
+                        }
+                        else if(Material != Value && BodyFound == true)
+                        {
+                            BorderMap.Add(Index);
+                            BodyFound = false;
+                        }
+                    }
+                }
+            }
+        }
+
+        static void AnalyseLayer(vtkImageData FileContent)
         {
             DisplayRemoveLines();
             MeteorData Data = new MeteorData(FileContent.GetPointData());
