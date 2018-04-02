@@ -81,7 +81,8 @@ namespace SciVis
             for (int i = 0; i < Count; i++)
             {
                 Console.CursorTop--;
-                Console.WriteLine();
+                Console.WriteLine(String.Format("{0," + (Console.BufferWidth-1 )+ "}", ' '));
+                Console.CursorTop--;
             }
         }
 

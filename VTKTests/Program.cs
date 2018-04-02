@@ -10,13 +10,13 @@ using static SciVis.Helper;
 namespace SciVis
 {
 
-    public class Program
+    class Program
     {
-        public static string PathTobi = @"c:\Users\Tobiv\Neu\scivis\oceans11.lanl.gov\deepwaterimpact\yA31\300x300x300-AllScalars_resolution\";
-        public static string PathGregor = @"C:\Store\WasserVTK\";
-        public static string Path = PathGregor;
-        public static string FileName = @"pv_insitu_300x300x300_07920.vti";
-        public static string File { get => Path + FileName; }
+        static string PathTobi = @"c:\Users\Tobiv\Neu\scivis\oceans11.lanl.gov\deepwaterimpact\yA31\300x300x300-AllScalars_resolution\";
+        static string PathGregor = @"C:\Store\WasserVTK\";
+        static string Path = PathTobi;
+        static string FileName = @"pv_insitu_300x300x300_03429.vti"; 
+        static string File { get => Path + FileName; }
 
         static void Main(string[] args)
         {
@@ -32,7 +32,7 @@ namespace SciVis
                 Console.SetWindowSize(Console.WindowWidth - 20, Console.WindowHeight);
                 Console.SetBufferSize(Console.WindowWidth, Console.BufferHeight);
             }
-            //Test_vti_Data();
+            //Test_vti_Data(File);
             //ReadImageData(File);
             //Display_Image_Data(File);
             vtkImageData Data = null;
@@ -49,10 +49,11 @@ namespace SciVis
             }
             try
             {
-                //AnalyseMat(Data);
-                AnalyseMaterials(Data);
+                //AnalyseMaterials(Data);
                 //Analyse(Data);
-                //AnalyseLayer(Data);
+                //Bericht_Map(Data);
+                //AnalyseRho(Data);
+                AnalyseMat(Data);
             }
             catch (Exception ex)
             {
@@ -65,7 +66,7 @@ namespace SciVis
             if (Debugger.IsAttached) Debugger.Break();
             //Console.ReadKey();
         }
-        public static vtkImageData ReadInData(string FileName)
+        static vtkImageData ReadInData(string FileName)
         {
             vtkXMLImageDataReader Reader = new vtkXMLImageDataReader();
             Reader.InitializeObjectBase();
@@ -80,7 +81,7 @@ namespace SciVis
             Reader?.Dispose();
             return ret;
         }
-        public static void Analyse(vtkImageData FileContent)
+        static void AnalyseVarStat(vtkImageData FileContent)
         {
             (long Index, Single Value) BiggestValue = (0, 0);
             MeteorData Data = new MeteorData(FileContent.GetPointData());
@@ -104,8 +105,9 @@ namespace SciVis
             Display("Preasurest Point at {0} is {1}", BiggestValue.Index, BiggestValue.Value);
         }
 
-        public static void AnalyseLayer(vtkImageData FileContent)
+        static void AnalyseRho(vtkImageData FileContent)
         {
+            DisplayRemoveLines();
             MeteorData Data = new MeteorData(FileContent.GetPointData());
             var CurrentList = Data.rho;
             List<(int, int, int, float)> Counter_ValOne = new List<(int, int, int, float)>();
@@ -146,37 +148,26 @@ namespace SciVis
                     }
                 }/*);*/
             }
+            DisplayRemoveLines();
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true, true);
             int ProcessedData = Counter_ValOne.Count + Counter_ValNearlyOne.Count + Counter_ValMiddle.Count + Counter_ValBottom.Count + Counter_ValHell.Count;
             Display(CurrentList.Name + "-Werte " + FileName);
-            DisplayBounds(">1", Counter_ValOne);
-            DisplayBounds("0.9-1", Counter_ValNearlyOne);
-            DisplayBounds("0.1-0.9", Counter_ValMiddle);
-            DisplayBounds("0.001-0.1", Counter_ValBottom);
-            DisplayBounds("<0.001", Counter_ValHell);
-            DrawBounds(">1", maxZ, Counter_ValOne);
-            DrawBounds("0.9-1", maxZ, Counter_ValNearlyOne);
-            DrawBounds("0.1-0.9", maxZ, Counter_ValMiddle);
-            DrawBounds("0.001-0.1", maxZ, Counter_ValBottom);
-            DrawBounds("<0.001", maxZ, Counter_ValHell);
-            //int mod = 0;
-            //foreach (var item in Counter_ValSmaller)
-            //{
-            //    mod++;
-            //    //if (mod % 30 == 0)
-            //    {
-            //        Display("Lower then 1: {3} at {0},{1},{2}", item.Item1, item.Item2, item.Item3, item.Item4);
-            //    }
-            //}
+            DisplayAndDrawBounds(">1", maxZ, Counter_ValOne);
+            DisplayAndDrawBounds("0.9-1", maxZ, Counter_ValNearlyOne);
+            DisplayAndDrawBounds("0.1-0.9", maxZ, Counter_ValMiddle);
+            DisplayAndDrawBounds("0.001-0.1", maxZ, Counter_ValBottom);
+            DisplayAndDrawBounds("<0.001", maxZ, Counter_ValHell);
+            Console.WriteLine();
         }
 
-        public static void AnalyseMaterials(vtkImageData FileContent)
+        static void AnalyseMat(vtkImageData FileContent)
         {
             const int LowerZBorder = 0;
             const int HigherZBorder = 300;
             MeteorData Data = new MeteorData(FileContent.GetPointData());
             FileContent.Dispose();
             var materialOccurrences = new long[4];
+            DisplayRemoveLines();
 
             for (int z = LowerZBorder; z < HigherZBorder; z++)
             {
@@ -201,32 +192,23 @@ namespace SciVis
             }
             
         }
-
-        private static void DisplayBounds(string title, List<(int, int, int, float)> Counter_List)
+        static void DisplayAndDrawBounds(string title, int whole, List<(int, int, int, float)> Counter_List)
         {
-            StringBuilder nv = new StringBuilder();
-            foreach (var item in title.Take(10))
-            {
-                nv.Append(item);
-            }
-            string s = String.Format(nv + " Items:{0," + (8 + 10 - nv.Length) + "} Upper Bound {1,3} Lower Bound {2,3}", Counter_List.Count(), Counter_List.MinOrDefault(x => x.Item3), Counter_List.MaxOrDefault(x => x.Item3));
-            Display(s);
-        }
-        private static void DrawBounds(string title, int whole, List<(int, int, int, float)> Counter_List)
-        {
-            int rel = whole > 30 ? 10 : 1;
             StringBuilder nv = new StringBuilder();
             foreach (var item in title.Take(10))
             {
                 nv.Append(item);
             }
             nv.Append(' ', 10 - nv.Length);
-            nv.Append('|');
-            int min = Counter_List.MinOrDefault(x => x.Item3);
-            int max = Counter_List.MaxOrDefault(x => x.Item3);
-            int FirstLength = min / rel;
-            int SecondLength = (max - min) / rel;
-            int ThirdLength = (whole - max) / rel;
+            string Bounds = String.Format(nv + " Items:{0,8} Upper Bound {1,3} Lower Bound {2,3}", Counter_List.Count(), Counter_List.MinOrDefault(x => x.Item3), Counter_List.MaxOrDefault(x => x.Item3));
+
+
+            double rel = whole > 30 ? 10 : 1;
+            double min = Counter_List.MinOrDefault(x => x.Item3);
+            double max = Counter_List.MaxOrDefault(x => x.Item3);
+            int FirstLength = (int)Math.Round(min / rel, 0);
+            int SecondLength = (int)Math.Ceiling((max - min) / rel);
+            int ThirdLength = (int)Math.Floor((whole - max) / rel);
             if (SecondLength == 0 && min != 0 && max != 0)
             {
                 SecondLength = 1;
@@ -239,22 +221,74 @@ namespace SciVis
                     FirstLength--;
                 }
             }
+            if (FirstLength + SecondLength + ThirdLength < 30)
+            {
+                ThirdLength++;
+            }
+            if (FirstLength + SecondLength + ThirdLength > 30)
+            {
+                if (ThirdLength != 0)
+                {
+                    ThirdLength--;
+                }
+                else
+                {
+                    FirstLength--;
+                }
+            }
             var b = new StringBuilder();
+            b.Append(' ');
+            b.Append('|');
             b.Append(' ', FirstLength);
             b.Append('#', SecondLength);
             b.Append(' ', ThirdLength);
-            string s = nv + b.ToString();
-            Console.SetBufferSize(s.Length < Console.WindowWidth? Console.WindowWidth : (s.Length + 10), Console.WindowHeight);
-            Display(s);
+            b.Append('|');
+            string Border = b.ToString();
+
+            Console.SetBufferSize(Bounds.Length < Console.WindowWidth ? Console.WindowWidth : (Bounds.Length + 10), Console.WindowHeight);
+            Display(Bounds + Border);
         }
 
+        static void Bericht_Map(vtkImageData FileContent)
+        {
+            MeteorData Data = new MeteorData(FileContent.GetPointData());
+
+            (List<(int, int, int, Single)>, float) AnalyseLayer(int z) 
+            {
+                var Resuls = new List<(int, int, int, Single)>();
+                for (int x = 0; x < 300; x++)
+                {
+                    for (int y = 0; y < 300; y++)
+                    {
+                        var (Index, Value) = Data.rho.GetPoint(x,y,z);
+                        Resuls.Add((x, y, z, Value));
+                    }
+                }
+                var mx = Resuls.Max(x => x.Item4);
+                var mn = Resuls.Min(x => x.Item4);
+                Display("Layer {0}, Min: {1} Max:{2}, Diff: {3}", z,mn, mx, mx-mn);
+                return (Resuls, mx - mn);
+            };
+            List<(int, int, int, Single)> BestResult;
+            float BestResultValue = 0;
+            for (int i = 0; i < 60; i++)
+            {
+                var x  = AnalyseLayer(i);
+                if (x.Item2 > BestResultValue)
+                {
+                    BestResult = x.Item1;
+                    BestResultValue = x.Item2;
+                }
+            }
+            Console.ReadKey();
+        }
 
         #region Meteor File Test Stuff
-        private static void Test_vti_Data()
+        static void Test_vti_Data(string FileName)
         {
             vtkXMLFileReadTester Tester = new vtkXMLFileReadTester();
             Tester.InitializeObjectBase();
-            Tester.SetFileName(File);
+            Tester.SetFileName(FileName);
             Display("Normal can read: {0}, type: {1}, date: {2}", Tester.TestReadFile(), Tester.GetFileVersion(), Tester.GetFileDataType());
             //Display("Normal InitializeParser {0}", Tester.InitializeParser());
             //try
@@ -271,8 +305,8 @@ namespace SciVis
             //vtkCommand X = new vtkCommandTobi();
             //X.InitializeObjectBase();
             //currentReader.SetReaderErrorObserver(X);
-            currentReader.SetFileName(File);
-            Display("Reader HasExecutive: {0}, CanReadFile {1}", currentReader.HasExecutive(), currentReader.CanReadFile(File));
+            currentReader.SetFileName(FileName);
+            Display("Reader HasExecutive: {0}, CanReadFile {1}", currentReader.HasExecutive(), currentReader.CanReadFile(FileName));
             currentReader.Update(); // here we read the file actually
 
             var exe = currentReader.GetExecutive();
@@ -328,6 +362,7 @@ namespace SciVis
             var tupnum = abstarray.GetNumberOfTuples();
             var value = abstarray.GetVariantValue(12345);
             var floatval = value.ToFloat();
+            Console.ReadKey();
             for (int i = 0; i < valnum; i+=100)
             {
                 Display("{0}:{1}",i,abstarray.GetVariantValue(i).ToFloat());
@@ -335,17 +370,17 @@ namespace SciVis
             currentReader.Dispose();
         }
 
-        public static void ReadImageData()
+        static void ReadImageData(string FileName)
         {
             // reader
             // Read all the data from the file
             vtkXMLImageDataReader reader = vtkXMLImageDataReader.New();
-            if (reader.CanReadFile(File) == 0)
+            if (reader.CanReadFile(FileName) == 0)
             {
-                Display("Cannot read file \"" + File + "\"", "Error");
+                Display("Cannot read file \"" + FileName + "\"", "Error");
                 //return;
             }
-            reader.SetFileName(File);
+            reader.SetFileName(FileName);
             reader.Update(); // here we read the file actually
 
             // mapper
@@ -375,15 +410,15 @@ namespace SciVis
 
         }
 
-        public static void Display_Image_Data()
+        static void Display_Image_Data(string FileName)
         {
             vtkXMLImageDataReader reader = vtkXMLImageDataReader.New();
-            if (reader.CanReadFile(File) == 0)
+            if (reader.CanReadFile(FileName) == 0)
             {
                 //MessageBox.Show("Cannot read file \"" + filePath + "\"", "Error", MessageBoxButtons.OK);
                 //return;
             }
-            reader.SetFileName(File);
+            reader.SetFileName(FileName);
             reader.Update(); // here we read the file actually
 
             // mapper
@@ -434,7 +469,7 @@ namespace SciVis
         static vtkRenderWindowInteractor iren;
         static vtkCamera camera;
 
-        private static void Example_3DSphere()
+        static void Example_3DSphere()
         {
             // Create a simple sphere. A pipeline is created.         
             var sphere = new vtkSphereSource();
@@ -475,7 +510,7 @@ namespace SciVis
             deleteAllVTKObjects();
         }
 
-        public static void deleteAllVTKObjects()
+        static void deleteAllVTKObjects()
         {         //clean up vtk objects         
             if (sphere != null)
             {
