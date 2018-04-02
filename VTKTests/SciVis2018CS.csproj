@@ -79,6 +79,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Helper.cs" />
+    <Compile Include="IO\IO.cs" />
     <Compile Include="Model\MeteorData.cs" />
     <Compile Include="Model\ModelHelper.cs" />
     <Compile Include="Model\PointDataList.cs" />

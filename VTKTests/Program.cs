@@ -22,23 +22,20 @@ namespace SciVis
         {
             if (args.Length > 0)
             {
-                //Display("File: {0}", args[0]);
                 FileName = args[0];
             }
 
             vtkOutputWindow.SetGlobalWarningDisplay(0);
-            if (Debugger.IsAttached)
-            {
-                Console.SetWindowSize(Console.WindowWidth - 20, Console.WindowHeight);
-                Console.SetBufferSize(Console.WindowWidth, Console.BufferHeight);
-            }
-            //Test_vti_Data(File);
-            //ReadImageData(File);
-            //Display_Image_Data(File);
+            //if (Debugger.IsAttached)
+            //{
+            //    Console.SetWindowSize(Console.WindowWidth - 20, Console.WindowHeight);
+            //    Console.SetBufferSize(Console.WindowWidth, Console.BufferHeight);
+            //}
+
             vtkImageData Data = null;
             try
             {
-                Data = ReadInData(File);
+                Data = IO.VTK_IO.ReadInData(File);
             }
             catch (Exception ex)
             {
@@ -49,11 +46,22 @@ namespace SciVis
             }
             try
             {
+                #region Test Stuff
+                //Test_vti_Data(File);
+                //ReadImageData(File);
+                //Display_Image_Data(File);
+                #endregion
+                #region Tobi Stuff
                 //AnalyseMaterials(Data);
                 //Analyse(Data);
                 //Bericht_Map(Data);
                 //AnalyseRho(Data);
-                AnalyseMat(Data);
+                //Analyse_mat(Data);
+                #endregion
+                #region Gregor Stuff
+                BorderScan(Data);
+                #endregion
+
             }
             catch (Exception ex)
             {
@@ -65,44 +73,6 @@ namespace SciVis
             Console.Beep(3000, 500);
             if (Debugger.IsAttached) Debugger.Break();
             //Console.ReadKey();
-        }
-        static vtkImageData ReadInData(string FileName)
-        {
-            vtkXMLImageDataReader Reader = new vtkXMLImageDataReader();
-            Reader.InitializeObjectBase();
-            Reader.SetFileName(FileName);
-            if (Reader.CanReadFile(FileName) == 0)
-            {
-                throw new Exception("Cannot Read File");
-            }
-            Display("Start Reading File");
-            Reader.Update();
-            var ret = Reader.GetOutput();
-            Reader?.Dispose();
-            return ret;
-        }
-        static void AnalyseVarStat(vtkImageData FileContent)
-        {
-            (long Index, Single Value) BiggestValue = (0, 0);
-            MeteorData Data = new MeteorData(FileContent.GetPointData());
-            BiggestValue = (0, 0);
-            foreach (var item in Data.rho)
-            {
-                if (item.Value > BiggestValue.Value)
-                {
-                    BiggestValue = item;
-                }
-            }
-            Display("Densest Point at {0} is {1}", BiggestValue.Index, BiggestValue.Value);
-            BiggestValue = (0, 0);
-            foreach (var item in Data.prs)
-            {
-                if (item.Value > BiggestValue.Value)
-                {
-                    BiggestValue = item;
-                }
-            }
-            Display("Preasurest Point at {0} is {1}", BiggestValue.Index, BiggestValue.Value);
         }
 
         // Erfasst alle Grenzpunkte eines bestimmten Materials und stellt sie in einer Bordermap fest
@@ -137,7 +107,39 @@ namespace SciVis
             }
         }
 
-        static void AnalyseLayer(vtkImageData FileContent)
+        #region Tobias' Stuff
+
+        static void Analyse_VarStat(vtkImageData FileContent)
+        {
+            (long Index, Single Value) BiggestValue = (0, 0);
+            MeteorData Data = new MeteorData(FileContent.GetPointData());
+            BiggestValue = (0, 0);
+            foreach (var item in Data.rho)
+            {
+                if (item.Value > BiggestValue.Value)
+                {
+                    BiggestValue = item;
+                }
+            }
+            Display("Densest Point at {0} is {1}", BiggestValue.Index, BiggestValue.Value);
+            BiggestValue = (0, 0);
+            foreach (var item in Data.prs)
+            {
+                if (item.Value > BiggestValue.Value)
+                {
+                    BiggestValue = item;
+                }
+            }
+            Display("Preasurest Point at {0} is {1}", BiggestValue.Index, BiggestValue.Value);
+        }
+        /// <summary>
+        /// stellt eine Dichte Analyse nach intressanten Bereichen zusammen
+        /// </summary>
+        /// <remarks>
+        /// Autor: Tobias Pabst
+        /// </remarks>
+        /// <param name="FileContent"></param>
+        static void Analyse_rho(vtkImageData FileContent)
         {
             DisplayRemoveLines();
             MeteorData Data = new MeteorData(FileContent.GetPointData());
@@ -184,15 +186,80 @@ namespace SciVis
             GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true, true);
             int ProcessedData = Counter_ValOne.Count + Counter_ValNearlyOne.Count + Counter_ValMiddle.Count + Counter_ValBottom.Count + Counter_ValHell.Count;
             Display(CurrentList.Name + "-Werte " + FileName);
-            DisplayAndDrawBounds(">1", maxZ, Counter_ValOne);
-            DisplayAndDrawBounds("0.9-1", maxZ, Counter_ValNearlyOne);
-            DisplayAndDrawBounds("0.1-0.9", maxZ, Counter_ValMiddle);
-            DisplayAndDrawBounds("0.001-0.1", maxZ, Counter_ValBottom);
-            DisplayAndDrawBounds("<0.001", maxZ, Counter_ValHell);
+
+            void DisplayAndDrawBounds(string title, List<(int, int, int, float)> Counter_List)
+            {
+                StringBuilder nv = new StringBuilder();
+                foreach (var item in title.Take(10))
+                {
+                    nv.Append(item);
+                }
+                nv.Append(' ', 10 - nv.Length);
+                string Bounds = String.Format(nv + " Items:{0,8} Upper Bound {1,3} Lower Bound {2,3}", Counter_List.Count(), Counter_List.MinOrDefault(x => x.Item3), Counter_List.MaxOrDefault(x => x.Item3));
+
+
+                double rel = maxZ > 30 ? 10 : 1;
+                double min = Counter_List.MinOrDefault(x => x.Item3);
+                double max = Counter_List.MaxOrDefault(x => x.Item3);
+                int FirstLength = (int)Math.Round(min / rel, 0);
+                int SecondLength = (int)Math.Ceiling((max - min) / rel);
+                int ThirdLength = (int)Math.Floor((maxZ - max) / rel);
+                if (SecondLength == 0 && min != 0 && max != 0)
+                {
+                    SecondLength = 1;
+                    if (ThirdLength > 0)
+                    {
+                        ThirdLength--;
+                    }
+                    else
+                    {
+                        FirstLength--;
+                    }
+                }
+                if (FirstLength + SecondLength + ThirdLength < 30)
+                {
+                    ThirdLength++;
+                }
+                if (FirstLength + SecondLength + ThirdLength > 30)
+                {
+                    if (ThirdLength != 0)
+                    {
+                        ThirdLength--;
+                    }
+                    else
+                    {
+                        FirstLength--;
+                    }
+                }
+                var b = new StringBuilder();
+                b.Append(' ');
+                b.Append('|');
+                b.Append(' ', FirstLength);
+                b.Append('#', SecondLength);
+                b.Append(' ', ThirdLength);
+                b.Append('|');
+                string Border = b.ToString();
+
+                Console.SetBufferSize(Bounds.Length < Console.WindowWidth ? Console.WindowWidth : (Bounds.Length + 10), Console.WindowHeight);
+                Display(Bounds + Border);
+            }
+
+
+            DisplayAndDrawBounds(">1", Counter_ValOne);
+            DisplayAndDrawBounds("0.9-1", Counter_ValNearlyOne);
+            DisplayAndDrawBounds("0.1-0.9", Counter_ValMiddle);
+            DisplayAndDrawBounds("0.001-0.1", Counter_ValBottom);
+            DisplayAndDrawBounds("<0.001", Counter_ValHell);
             Console.WriteLine();
         }
-
-        static void AnalyseMat(vtkImageData FileContent)
+        /// <summary>
+        /// Erstellt eine material verteilungs analyse
+        /// </summary>
+        /// <remarks>
+        /// Autor: Tobias Pabst
+        /// </remarks>
+        /// <param name="FileContent"></param>
+        static void Analyse_mat(vtkImageData FileContent)
         {
             const int LowerZBorder = 0;
             const int HigherZBorder = 300;
@@ -214,7 +281,7 @@ namespace SciVis
                 }
             }
             DisplayRemoveLines();
-            Display("Material {0,1} {1,-1} at {2}", "Total","Relative", FileName);
+            Display("Material {0,1} {1,-1} at {2}", "Total", "Relative", FileName);
             double s = materialOccurrences.Sum(); //(300d*300d*(HigherZBorder- LowerZBorder));
             for (int i = 0; i < materialOccurrences.Length; i++)
             {
@@ -222,90 +289,40 @@ namespace SciVis
                 double rel = val / s;
                 Display("{0, -5} {1,8} {2,-1:0.###########}", i, val, rel);
             }
-            
+
         }
-        static void DisplayAndDrawBounds(string title, int whole, List<(int, int, int, float)> Counter_List)
-        {
-            StringBuilder nv = new StringBuilder();
-            foreach (var item in title.Take(10))
-            {
-                nv.Append(item);
-            }
-            nv.Append(' ', 10 - nv.Length);
-            string Bounds = String.Format(nv + " Items:{0,8} Upper Bound {1,3} Lower Bound {2,3}", Counter_List.Count(), Counter_List.MinOrDefault(x => x.Item3), Counter_List.MaxOrDefault(x => x.Item3));
-
-
-            double rel = whole > 30 ? 10 : 1;
-            double min = Counter_List.MinOrDefault(x => x.Item3);
-            double max = Counter_List.MaxOrDefault(x => x.Item3);
-            int FirstLength = (int)Math.Round(min / rel, 0);
-            int SecondLength = (int)Math.Ceiling((max - min) / rel);
-            int ThirdLength = (int)Math.Floor((whole - max) / rel);
-            if (SecondLength == 0 && min != 0 && max != 0)
-            {
-                SecondLength = 1;
-                if (ThirdLength > 0)
-                {
-                    ThirdLength--;
-                }
-                else
-                {
-                    FirstLength--;
-                }
-            }
-            if (FirstLength + SecondLength + ThirdLength < 30)
-            {
-                ThirdLength++;
-            }
-            if (FirstLength + SecondLength + ThirdLength > 30)
-            {
-                if (ThirdLength != 0)
-                {
-                    ThirdLength--;
-                }
-                else
-                {
-                    FirstLength--;
-                }
-            }
-            var b = new StringBuilder();
-            b.Append(' ');
-            b.Append('|');
-            b.Append(' ', FirstLength);
-            b.Append('#', SecondLength);
-            b.Append(' ', ThirdLength);
-            b.Append('|');
-            string Border = b.ToString();
-
-            Console.SetBufferSize(Bounds.Length < Console.WindowWidth ? Console.WindowWidth : (Bounds.Length + 10), Console.WindowHeight);
-            Display(Bounds + Border);
-        }
-
+        /// <summary>
+        /// Erstellt eine dichte analyse von pro z-ebene
+        /// </summary>
+        /// <remarks>
+        /// Autor: Tobias Pabst
+        /// </remarks>
+        /// <param name="FileContent"></param>
         static void Bericht_Map(vtkImageData FileContent)
         {
             MeteorData Data = new MeteorData(FileContent.GetPointData());
 
-            (List<(int, int, int, Single)>, float) AnalyseLayer(int z) 
+            (List<(int, int, int, Single)>, float) AnalyseLayer(int z)
             {
                 var Resuls = new List<(int, int, int, Single)>();
                 for (int x = 0; x < 300; x++)
                 {
                     for (int y = 0; y < 300; y++)
                     {
-                        var (Index, Value) = Data.rho.GetPoint(x,y,z);
+                        var (Index, Value) = Data.rho.GetPoint(x, y, z);
                         Resuls.Add((x, y, z, Value));
                     }
                 }
                 var mx = Resuls.Max(x => x.Item4);
                 var mn = Resuls.Min(x => x.Item4);
-                Display("Layer {0}, Min: {1} Max:{2}, Diff: {3}", z,mn, mx, mx-mn);
+                Display("Layer {0}, Min: {1} Max:{2}, Diff: {3}", z, mn, mx, mx - mn);
                 return (Resuls, mx - mn);
             };
             List<(int, int, int, Single)> BestResult;
             float BestResultValue = 0;
             for (int i = 0; i < 60; i++)
             {
-                var x  = AnalyseLayer(i);
+                var x = AnalyseLayer(i);
                 if (x.Item2 > BestResultValue)
                 {
                     BestResult = x.Item1;
@@ -314,6 +331,7 @@ namespace SciVis
             }
             Console.ReadKey();
         }
+        #endregion
 
         #region Meteor File Test Stuff
         static void Test_vti_Data(string FileName)
