@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using static SciVis.Helper;
 
 namespace SciVis
@@ -14,25 +16,45 @@ namespace SciVis
     {
         static string PathTobi = @"c:\Users\Tobiv\Neu\scivis\oceans11.lanl.gov\deepwaterimpact\yA31\300x300x300-AllScalars_resolution\";
         static string PathGregor = @"C:\Store\WasserVTK\";
-        static string Path = PathTobi;
+        static string Path = PathGregor;
         static string FileName = @"pv_insitu_300x300x300_03429.vti"; 
         static string File { get => Path + FileName; }
 
         static void Main(string[] args)
         {
+            Console.WriteLine(" SciVis 2018 Analytic Program \n\n Please choose your option: \n\n 1: Exit\n 2: Borderscanner");
+            Char ReadedKey = Console.ReadKey().KeyChar;
+
+            if(ReadedKey == '1' )
+            {
+                System.Environment.Exit(-1);
+            }
+            else if(ReadedKey == '2')
+            {
+                Console.WriteLine("Starte BorderScanner");
+
+            }
+            else
+            {
+                Console.WriteLine("Unklare Befehl - Programm macht Feierabend");
+                Console.WriteLine(ReadedKey);
+                Thread.Sleep(100);
+                System.Environment.Exit(-1);
+            }
+
             if (args.Length > 0)
             {
                 FileName = args[0];
             }
 
             vtkOutputWindow.SetGlobalWarningDisplay(0);
-            //if (Debugger.IsAttached)
-            //{
-            //    Console.SetWindowSize(Console.WindowWidth - 20, Console.WindowHeight);
-            //    Console.SetBufferSize(Console.WindowWidth, Console.BufferHeight);
-            //}
+            if (Debugger.IsAttached)
+            {
+                Console.SetWindowSize(Console.WindowWidth - 20, Console.WindowHeight);
+                Console.SetBufferSize(Console.WindowWidth, Console.BufferHeight);
+            }
 
-            vtkImageData Data = null;
+
             try
             {
                 Data = IO.VTK_IO.ReadInData(File);
@@ -58,8 +80,8 @@ namespace SciVis
                 //AnalyseRho(Data);
                 //Analyse_mat(Data);
                 #endregion
-                #region Gregor Stuff
-                BorderScan(Data);
+                #region Aesir Stuff
+                //BorderScan(Data);
                 #endregion
 
             }
@@ -72,7 +94,9 @@ namespace SciVis
             }
             Console.Beep(3000, 500);
             if (Debugger.IsAttached) Debugger.Break();
-            //Console.ReadKey();
+            Console.WriteLine("Operation abgeschlossen. Jeder Knopfdruck terminiert das Programm!");
+            Console.ReadKey();
+
         }
 
         // Erfasst alle Grenzpunkte eines bestimmten Materials und stellt sie in einer Bordermap fest
